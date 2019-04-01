@@ -1,0 +1,42 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "value": "SFTPLogicApp"
+    },
+    "sftp_1_Connection_Name": {
+      "value": "sftp-1"
+    },
+    "sftp_1_Connection_DisplayName": {
+      "value": "sftpnewcon"
+    },
+    "sftp_1_hostName": {
+      "value": "test.rebex.net"
+    },
+    "sftp_1_userName": {
+      "value": "demo"
+    },
+    //"sftp_1_password": {
+    //  "value": "https://keyvaultnewblob.vault.azure.net/secrets/sftppwd/e831ee317f3e4880999d9bf4d4482a76"
+    //},
+    "sftp_1_password": {
+      "value": "password"
+    },
+    "azureblob_1_Connection_DisplayName": {
+      "value": "testblobcon"
+    },
+    "azureblob_1_accountname": {
+      "value": "testexamplestorage"
+    },
+    //"azureblob_1_accesskey": {
+    //  "value": "https://keyvaultnewblob.vault.azure.net/secrets/blobtestpoc/5adb8fd6234d4452ac401faef034e8df"
+    //},
+    "azureblob_1_accesskey": {
+      "value": "JIOZZmpX8JEGQchpMNOHuTwkxi01TLZjXuObKzvQh2a4UK1sxFLZQvQCN+Jzm3uMh97HoXCM0MWyau55qdugWw=="
+    },
+    "azureblob_1_containerpath": {
+      "value": "/testcontainer/Output/"
+    }
+  }
+}

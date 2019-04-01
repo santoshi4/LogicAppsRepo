@@ -1,0 +1,282 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the Logic App."
+      }
+    },
+    "logicAppLocation": {
+      "type": "string",
+      "defaultValue": "southeastasia",
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2"
+      ],
+      "metadata": {
+        "description": "Location of the Logic App."
+      }
+    },
+    "sftp_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "sftp"
+    },
+    "sftp_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": {}
+    },
+    "sftp_1_hostName": {
+      "type": "string",
+      "metadata": {
+        "description": "Host Server Address"
+      },
+      "defaultValue": {}
+    },
+    "sftp_1_userName": {
+      "type": "string",
+      "metadata": {
+        "description": "User Name"
+      },
+      "defaultValue": {}
+    },
+    "sftp_1_password": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password"
+      }
+    },
+    "sftp_1_giveUpSecurityAndAcceptAnySshHostKey": {
+      "type": "bool",
+      "metadata": {
+        "description": "Disable SSH Host Key Validation? (True/False)"
+      },
+      "defaultValue": true
+    },
+    "sftp_1_sshHostKeyFingerprint": {
+      "type": "string",
+      "metadata": {
+        "description": "SSH Host Key Finger-print"
+      },
+      "defaultValue": ""
+    },
+    "sftp_1_disableUploadFilesResumeCapability": {
+      "type": "bool",
+      "metadata": {
+        "description": "Disable Resume Capability? (True/False)"
+      },
+      "defaultValue": false
+    },
+    "azureblob_1_Connection_Name": {
+      "type": "string",
+      "defaultValue": "azureblob"
+    },
+    "azureblob_1_ContainerPath": {
+      "type": "string",
+      "defaultValue": {}
+    },
+   
+    "azureblob_1_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": {}
+    },
+    "azureblob_1_accountname": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account the connector should use."
+      },
+      "defaultValue": {}
+    },
+    "azureblob_1_accesskey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Specify a valid primary/secondary storage account access key."
+      }
+    }
+  },
+  "variables": {
+    
+  },
+  "resources": [
+    {
+      "name": "[parameters('logicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('logicAppLocation')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2016-06-01",
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Get_file_content_using_path": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['sftp_1']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/datasets/default/GetFileContentByPath",
+                "queries": {
+                  "path": "/pub/example/readme.txt",
+                  "queryParametersSingleEncoded": true,
+                  "inferContentType": true
+                }
+              },
+              "runAfter": {}
+            },
+            "Create_blob": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azureblob']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": "@body('Get_file_content_using_path')",
+                "path": "/datasets/default/files",
+                "queries": {
+                  "folderPath": "[parameters('azureblob_1_containerpath')]",
+                  "name": "Final@{utcNow()}.txt",
+                  "queryParametersSingleEncoded": true
+                }
+              },
+              "runAfter": {
+                "Get_file_content_using_path": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Get_Blob_Metadata": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azureblob']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/datasets/default/files/@{encodeURIComponent(encodeURIComponent(body('Create_blob')?['Path']))}"
+              },
+              "runAfter": {
+                "Create_blob": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "Recurrence": {
+              "type": "Recurrence",
+              "recurrence": {
+                "frequency": "Hour",
+                "interval": 1
+              }
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "sftp_1": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'sftp')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('sftp_1_Connection_Name'))]",
+                "connectionName": "[parameters('sftp_1_Connection_Name')]"
+              },
+              "azureblob": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'azureblob')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('azureblob_1_Connection_Name'))]",
+                "connectionName": "[parameters('azureblob_1_Connection_Name')]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('sftp_1_Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('azureblob_1_Connection_Name'))]"
+      ]
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('sftp_1_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'sftp')]"
+        },
+        "displayName": "[parameters('sftp_1_Connection_DisplayName')]",
+        "parameterValues": {
+          "hostName": "[parameters('sftp_1_hostName')]",
+          "userName": "[parameters('sftp_1_userName')]",
+          "password": "[parameters('sftp_1_password')]",
+          "giveUpSecurityAndAcceptAnySshHostKey": "[parameters('sftp_1_giveUpSecurityAndAcceptAnySshHostKey')]",
+          "sshHostKeyFingerprint": "[parameters('sftp_1_sshHostKeyFingerprint')]",
+          "disableUploadFilesResumeCapability": "[parameters('sftp_1_disableUploadFilesResumeCapability')]"
+        }
+      }
+    },
+   
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('azureblob_1_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'azureblob')]"
+        },
+        "displayName": "[parameters('azureblob_1_Connection_DisplayName')]",
+        "parameterValues": {
+          "accountName": "[parameters('azureblob_1_accountName')]",
+          "accessKey": "[parameters('azureblob_1_accessKey')]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
