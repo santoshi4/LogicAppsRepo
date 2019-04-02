@@ -1,0 +1,337 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the Logic App."
+      }
+    },
+    "logicAppLocation": {
+      "type": "string",
+      "defaultValue": "southeastasia",
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2"
+      ],
+      "metadata": {
+        "description": "Location of the Logic App."
+      }
+    },
+    "azureblob_new_Connection_Name": {
+      "type": "string",
+      "defaultValue": "azureblob"
+    },
+    "azureblob_new_ContainerPath": {
+      "type": "string",
+      "defaultValue": {}
+    },
+    "azureblob_new_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": {}
+    },
+    "azureblob_new_accountname": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account the connector should use."
+      },
+      "defaultValue": {}
+    },
+    "azureblob_new_accesskey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Specify a valid primary/secondary storage account access key."
+      }
+    },
+    "sql_new_Connection_Name": {
+      "type": "string",
+      "defaultValue": "sql"
+    },
+    "sql_new_Connection_DisplayName": {
+      "type": "string",
+      "defaultValue": {}
+    },
+    "sql_new_server": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL server name"
+      },
+      "defaultValue": {}
+    },
+    "sql_new_database": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL database name"
+      },
+      "defaultValue": {}
+    },
+    "sql_new_username": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Username credential"
+      }
+    },
+    "sql_new_password": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password credential"
+      }
+    },
+    "sql_new_sqlConnectionString": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SQL Connection String"
+      }
+    },
+    "sql_new_usp_storedprocedure": {
+      "type": "string",
+      "defaultValue": {}
+    },
+    "integrationAccounts_testintegration_name": {
+      "type": "string",
+      "defaultValue": "testintegration"
+    },
+    "xml_validation_schemaname": {
+      "type": "string",
+      "defaultValue": {}
+    },
+    "transform_xml_schemaname": {
+      "type": "string",
+      "defaultValue": {}
+    },
+    "flatfile_encoding_schemaname": {
+      "type": "string",
+      "defaultValue": {}
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "[parameters('logicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('logicAppLocation')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2016-06-01",
+      "properties": {
+        "integrationAccount": {
+          "id": "[resourceId('Microsoft.Logic/integrationAccounts', parameters('integrationAccounts_testintegration_name'))]"
+        },
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Execute_stored_procedure": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['sql']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "[concat('/datasets/default/procedures/@{encodeURIComponent(''', parameters('sql_new_usp_storedprocedure'), ''')}')]"
+              },
+              "runAfter": {}
+            },
+            "For_each": {
+              "actions": {
+                "XML_Validation": {
+                  "type": "XmlValidation",
+                  "inputs": {
+                    "content": "@items('For_each')?['XML_F52E2B61-18A1-11d1-B105-00805F49916B']",
+                    "integrationAccount": {
+                      "schema": {
+                        "name": "[parameters('xml_validation_schemaname')]"
+                      }
+                    }
+                  },
+                  "runAfter": {}
+                },
+                "Transform_XML": {
+                  "type": "Xslt",
+                  "inputs": {
+                    "content": "@items('For_each')?['XML_F52E2B61-18A1-11d1-B105-00805F49916B']",
+                    "integrationAccount": {
+                      "map": {
+                        "name": "[parameters('transform_xml_schemaname')]"
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "XML_Validation": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Flat_File_Encoding": {
+                  "type": "FlatFileEncoding",
+                  "inputs": {
+                    "content": "@{body('Transform_XML')}",
+                    "integrationAccount": {
+                      "schema": {
+                        "name": "[parameters('flatfile_encoding_schemaname')]"
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Transform_XML": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "Create_blob": {
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['azureblob']['connectionId']"
+                      }
+                    },
+                    "method": "post",
+                    "body": "@body('Flat_File_Encoding')",
+                    "path": "/datasets/default/files",
+                    "queries": {
+                      "folderPath": "/testcontainer/Output/",
+                      "name": "xmltocsv@{utcNow()}.txt",
+                      "queryParametersSingleEncoded": true
+                    }
+                  },
+                  "runAfter": {
+                    "Flat_File_Encoding": [
+                      "Succeeded"
+                    ]
+                  },
+                  "runtimeConfiguration": {
+                    "contentTransfer": {
+                      "transferMode": "Chunked"
+                    }
+                  }
+                }
+              },
+              "foreach": "@body('Execute_stored_procedure')?['resultsets']?['Table1']",
+              "runAfter": {
+                "Execute_stored_procedure": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Foreach"
+            }
+          },
+              "parameters": {
+                "$connections": {
+                  "defaultValue": {},
+                  "type": "Object"
+                }
+              },
+              "triggers": {
+                "Recurrence": {
+                  "type": "Recurrence",
+                  "recurrence": {
+                    "frequency": "Hour",
+                    "interval": 1
+                  }
+                }
+              },
+              "contentVersion": "1.0.0.0",
+              "outputs": {}
+            },
+            "parameters": {
+              "$connections": {
+                "value": {
+                  "sql": {
+                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'sql')]",
+                    "connectionId": "[resourceId('Microsoft.Web/connections', parameters('sql_new_Connection_Name'))]",
+                    "connectionName": "[parameters('sql_new_Connection_Name')]"
+                  },
+                  "azureblob": {
+                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'azureblob')]",
+                    "connectionId": "[resourceId('Microsoft.Web/connections', parameters('azureblob_new_Connection_Name'))]",
+                    "connectionName": "[parameters('azureblob_new_Connection_Name')]"
+                  }
+                }
+              }
+            }
+          },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('sql_new_Connection_Name'))]"
+      ]
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('sql_new_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'sql')]"
+        },
+        "displayName": "[parameters('sql_new_Connection_DisplayName')]",
+        "parameterValues": {
+          "server": "[parameters('sql_new_server')]",
+          "database": "[parameters('sql_new_database')]",
+          "username": "[parameters('sql_new_username')]",
+          "password": "[parameters('sql_new_password')]",
+          "sqlConnectionString": "[parameters('sql_new_sqlConnectionString')]"
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('azureblob_new_Connection_Name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'azureblob')]"
+        },
+        "displayName": "[parameters('azureblob_new_Connection_DisplayName')]",
+        "parameterValues": {
+          "accountName": "[parameters('azureblob_new_accountname')]",
+          "accessKey": "[parameters('azureblob_new_accesskey')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Logic/integrationAccounts",
+      "sku": {
+        "name": "Free"
+      },
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('integrationAccounts_testintegration_name')]",
+      "location": "[parameters('logicAppLocation')]",
+      "scale": null,
+      "properties": {
+        "state": "Enabled"
+      },
+      "dependsOn": []
+    }
+  ],
+  "outputs": {}
+}

@@ -1,0 +1,51 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "value": "SprocXMLCSVLogicApp"
+    },
+    "azureblob_new_Connection_DisplayName": {
+      "value": "xmltocsvblobcon"
+    },
+    "azureblob_new_accountname": {
+      "value": "testexamplestorage"
+    },
+    "azureblob_new_accesskey": {
+      "value": "JIOZZmpX8JEGQchpMNOHuTwkxi01TLZjXuObKzvQh2a4UK1sxFLZQvQCN+Jzm3uMh97HoXCM0MWyau55qdugWw=="
+    },
+    "azureblob_new_ContainerPath": {
+      "value": "/testcontainer/Input/"
+    },
+    "xml_validation_schemaname": {
+      "value": "XMLSchema"
+    },
+    "transform_xml_schemaname": {
+      "value": "SSSS2"
+    },
+    "flatfile_encoding_schemaname": {
+      "value": "CSVSchema"
+    },
+    "sql_new_Connection_DisplayName": {
+      "value": "xmltocsvsqlcon"
+    },
+    "sql_new_server": {
+      "value": "testpocserver4.database.windows.net"
+    },
+    "sql_new_database": {
+      "value": "testpocdatabase"
+    },
+    "sql_new_username": {
+      "value": "test"
+    },
+    "sql_new_password": {
+      "value": "Miracle@1"
+    },
+    "sql_new_sqlConnectionString": {
+      "value": "Server=tcp:testpocserver4.database.windows.net,1433;Initial Catalog=testpocdatabase;Persist Security Info=False;User ID=test;Password=Miracle@1;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+    },
+    "sql_new_usp_storedprocedure": {
+      "value": "[dbo].[usp_employeeprocedure]"
+    }
+  }
+}
