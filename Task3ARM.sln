@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "Task3ARM", "Task3ARM\Task3ARM.deployproj", "{36D44912-25EB-467C-9B84-2A7B147E32FF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{36D44912-25EB-467C-9B84-2A7B147E32FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36D44912-25EB-467C-9B84-2A7B147E32FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36D44912-25EB-467C-9B84-2A7B147E32FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36D44912-25EB-467C-9B84-2A7B147E32FF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {759C3F77-FC4D-4FFB-84C3-503E427158FD}
+	EndGlobalSection
+EndGlobal
